@@ -33,13 +33,13 @@ skills/
 ### Clone into your agents directory
 
 ```bash
-git clone https://github.com/Jolc/skills.git ~/.agents/skills
+git clone https://github.com/fanxuankai/skills.git ~/.agents/skills
 ```
 
 ### Via skills.sh
 
 ```bash
-npx skills@latest add Jolc/skills
+npx skills@latest add fanxuankai/skills
 ```
 
 ## License
