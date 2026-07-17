@@ -1,34 +1,26 @@
-# Infrastructure Skills For Real Engineers
+# skills
 
-A small collection of agent skills for managing real infrastructure — Cloudflare and Oracle Cloud. Small, composable, and loaded on demand so the agent acts on working commands instead of hallucinating API shapes.
+个人日常使用的 agent skills 沉淀。把反复用到的操作、容易忘的 ID、容易踩的坑、容易拼错的命令固化下来，让 agent 直接照着干。
 
-## Quickstart
+不追求覆盖面，只放自己用过的。每个 skill 是一个 `SKILL.md` 加若干 `references/` 工作流，agent 按需加载。
 
-```bash
-npx skills@latest add fanxuankai/skills
-```
-
-Pick the skills you want and the agent you use. Or clone directly:
+## Install
 
 ```bash
 git clone https://github.com/fanxuankai/skills.git ~/.agents/skills
 ```
 
-## Why These Skills Exist
+或通过 skills.sh：
 
-Every time you ask an agent to move a DNS record or open a port, it forgets which ID goes where, reaches for the Global API Key, or invents an endpoint that doesn't exist. These skills encode the exact commands and the gotchas — scoped API tokens, tenancy OCID as the root compartment, public IPs coming from `list-vnics`, the catch-all ingress rule cloudflared refuses to start without — so it gets it right the first time.
+```bash
+npx skills@latest add fanxuankai/skills
+```
 
-Each skill is a `SKILL.md` with YAML front matter the harness matches against, plus `references/` workflows the agent reads only when a task needs them.
+## Skills
 
-## Reference
+**cloudflare** — 通过 Cloudflare REST API 管理 DNS 记录、Tunnel（`cloudflared`）和 zone 设置。始终用 scope 受限的 API token，不用 Global API Key。涵盖记录增删改、tunnel 创建与 DNS 接线、`cloudflared` 安装与 systemd、改名、502 排查。
 
-### cloudflare
-
-Manage Cloudflare DNS records, Tunnels (`cloudflared`), and zone settings through the REST API — always with a scoped API token, never the Global API Key. Covers record CRUD, tunnel creation and DNS wiring, `cloudflared` install + systemd, renaming, and debugging 502s.
-
-### oci
-
-Manage Oracle Cloud compute instances, networking (VCN, security lists, NSGs), and SSH access through the OCI CLI. Covers listing instances and VNIC IPs, start/stop/reboot, opening ports (ingress rule + iptables), console connections, and recovering from host-key mismatches after Always Free reclamation.
+**oci** — 通过 OCI CLI 管理 Oracle Cloud 计算实例、网络（VCN / 安全列表 / NSG）和 SSH 访问。涵盖实例与 VNIC IP 查询、启停重启、开端口（ingress 规则 + iptables）、控制台连接、Always Free 回收后的 host-key 处理。
 
 ## Structure
 
