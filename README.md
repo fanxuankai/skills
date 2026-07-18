@@ -22,6 +22,8 @@ npx skills@latest add fanxuankai/skills
 
 **oci** — 通过 OCI CLI 管理 Oracle Cloud 计算实例、网络（VCN / 安全列表 / NSG）和 SSH 访问。涵盖实例与 VNIC IP 查询、启停重启、开端口（ingress 规则 + iptables）、控制台连接、Always Free 回收后的 host-key 处理。
 
+**prokvm** — 通过逆向出的 web API 操作 ProKvm 会员中心（自签 HTTPS、无官方 API 文档）。涵盖登录、抓取服务器列表（分页 + HTML 内嵌 JSON）、解析升级页、带 PJAX 头的批量带宽升级，以及面板升级后重新逆向的工作流。凭据一律从环境变量读取，不硬编码。
+
 ## Structure
 
 ```
@@ -36,6 +38,12 @@ skills/
     └── references/
         ├── instance-networking.md
         └── always-free.md
+└── prokvm/
+    ├── SKILL.md
+    ├── references/
+    │   └── reverse-engineer-panel.md
+    └── scripts/
+        └── upgrade_bandwidth.py
 ```
 
 ## License
