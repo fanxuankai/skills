@@ -45,7 +45,7 @@ All paths are under the panel host. The panel sets a session cookie via `Set-Coo
 
 - **Server list**: `GET /server/index?page=<n>` (10 per page) or `/server/index?size=1000` for a single page.
   - The HTML embeds `var list = {...};` as JSON. Parse with `re.search(r"var list\s*=\s*(\{.*?\})\s*;", html, re.S)`.
-  - Each entry has `id_sn` (server id), `net` (current bandwidth in Mbps), `server_name`, `node`.
+  - Each entry has `id_sn` (server id), `net` (current bandwidth in Mbps), `server_name`, `node`, **plus full SSH credentials**: `ip`, `ssh_user`, `ssh_pass`, `ssh_port`. Grab all of these when provisioning servers — the SSH fields are the entry point for any on-host operation (installing software, reading configs, running health checks).
   - Pagination: page 0 returns the first 10, `page=10` returns the next batch. Deduplicate by `id_sn`.
 
 - **Upgrade page**: `GET /server/detail/{id_sn}/upgrade?type=list`
@@ -94,6 +94,46 @@ Behavior:
 - Skips servers whose `form_max.net` < target (node ceiling).
 - Submits upgrade POST with PJAX headers; parses `code`/`msg` from JSON.
 - 1s sleep between submissions to avoid hammering the panel.
+
+## Server provisioning workflow
+
+Once you have the server list with SSH credentials, a common task is to run something on every host — install a package, deploy a service, collect a config. Use **scripts/provision_servers.py** as the base. It:
+
+- Logs into the panel, fetches the full server list (with `ip`/`ssh_user`/`ssh_pass`/`ssh_port`).
+- Runs a user-supplied shell command on each host over SSH (via `sshpass` — `brew install sshpass` / `apt install sshpass`).
+- Serial by default (parallel SSH from a laptop usually just thrashes the network); edit the loop if you need concurrency.
+
+```bash
+PROKVM_HOST=https://<panel-ip> \
+PROKVM_USER=... \
+PROKVM_PASS=... \
+python3 scripts/provision_servers.py "<remote shell command>"
+```
+
+For complex multi-step provisioning (install a proxy core, rotate keys, pull a generated node link), don't inline a giant shell string — write the remote steps into a script file, `scp` it up, run it, and pull back the output. `provision_servers.py` shows the SSH helper pattern to copy.
+
+### CentOS 7 caveat
+
+Many ProKvm hosts ship CentOS 7.9, whose official yum mirrors went dark in 2024 (EOL). `yum install` will fail with `Cannot find a valid baseurl for repo: base/7/x86_64`. Before installing anything, repoint yum at the vault mirror:
+
+```bash
+mkdir -p /etc/yum.repos.d/bak
+mv /etc/yum.repos.d/CentOS-*.repo /etc/yum.repos.d/bak/ 2>/dev/null
+for r in os extras updates; do
+cat > /etc/yum.repos.d/CentOS-$r.repo << EOF
+[$r]
+name=CentOS-7 $r
+baseurl=https://vault.centos.org/7.9.2009/$r/x86_64/
+gpgcheck=0
+enabled=1
+EOF
+done
+yum clean all
+```
+
+Then `yum install -y wget` (or whatever) works. Always check `command -v <tool>` first and only fix repos when the tool is missing — don't blindly rewrite repos on every host.
+
+For the concrete sing-box (233boy) install + node-link extraction flow that produced this guidance, read **references/centos7-sing-box.md**.
 
 For the manual reverse-engineering steps that produced these endpoints, read **references/reverse-engineer-panel.md** — useful when the panel changes and the script needs updating.
 
